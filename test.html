@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="testApp">
+  <head>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js"></script>
+    <script src="angular-base64-upload.min.js"></script>
+    <script>
+
+angular.module('testApp', ['naif.base64'])
+.controller('testController', function($scope, $http) {
+  $scope.outputFile = "test.jpg";
+  $scope.outputBucket = "leanin-email-assets";
+  $scope.data = "";
+
+  $scope.submit = function(){
+    $http.post('https://rkymnp5iyj.execute-api.us-east-1.amazonaws.com/stage', {
+      outputFile : $scope.outputFile,
+      outputBucket : $scope.outputBucket,
+      data : $scope.data.base64
+    })
+    .success(function(result){
+      alert("Done!  Reslt was: " + result.toString());
+    })
+    .console.error((function(err){
+      alert(err);
+    }));
+  }
+})
+
+    </script>
+  </head>
+  <body ng-controller="testController">
+    Enter a File To Send to Lambda-Image:
+    <br>
+    File Name: <input name="outputFile" ng-model="outputFile">
+    <br>
+    Bucket Name: <input name="outputBucket" ng-model="outputBucket">
+    <br>
+    <input type="file" name="data" ng-model="data"  base-sixty-four-input>
+    <button ng-click="submit()"> Submit It </button>
+  </body>
+</html>

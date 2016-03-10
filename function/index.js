@@ -23,12 +23,15 @@ const config = {
  operations : String (comma-separated list)
 */
 module.exports.handler = (event, context) => {
+  console.log("data is:");
+  console.log(event.data);
   const bucket = event.outputBucket ? event.outputBucket : config.s3.bucket;
   // // load image
   console.log('writing %s/%s', bucket, event.outputFile);
   const files = new s3(bucket);
   console.log("created s3 interfrace");
-  files.writeObject(event.outputFile, event.data, (err) => {
+  const binaryData = new Buffer(event.data.base64, 'base64');
+  files.writeObject(event.outputFile, binaryData, (err) => {
     if (err) {
       console.log(err);
     }
