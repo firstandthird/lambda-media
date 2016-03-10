@@ -2,6 +2,7 @@
 
 const im = require('imagemagick');
 const s3 = require('../lib/s3.js');
+const async = require('async');
 const Logr = require('logr');
 const log = new Logr({
   defaultTags: ['handler'],
@@ -16,24 +17,42 @@ const config = {
   }
 };
 
-/* payload loks like:
- data : base 64 string
+/* payload should look like:
+ data : base64 string representing the image
  outputBucket : String (optional)
- outputFile : String
- operations : String (comma-separated list)
+ outputFile : String (name of the file to output)
 */
 module.exports.handler = (event, context) => {
-  console.log("data is:");
-  console.log(event.data);
   const bucket = event.outputBucket ? event.outputBucket : config.s3.bucket;
-  // // load image
-  console.log('writing %s/%s', bucket, event.outputFile);
-  const files = new s3(bucket);
-  console.log("created s3 interfrace");
-  const binaryData = new Buffer(event.data.base64, 'base64');
-  files.writeObject(event.outputFile, binaryData, (err) => {
+  async.auto({
+    resized: (done) => {
+      im.resize({
+        srcData: new Buffer(event.data.base64, 'base64'),
+        width: '50%',
+        height: '50%'
+      }, (err, stdout, stderr) => {
+        if (stderr) {
+          return done(stderr);
+        }
+        if (err) {
+          return done(err);
+        }
+        done(null, stdout);
+      });
+    },
+    store: ['resized', (done, result) => {
+      const files = new s3(bucket);
+      files.writeObject(event.outputFile, new Buffer(result.resized, 'binary'), (err) => {
+        if (err) {
+          return done(err);
+        }
+        return done(null);
+      });
+    }]
+  }, (err) => {
     if (err) {
       console.log(err);
+      return context.fail(false);
     }
     return context.succeed(true);
   });
