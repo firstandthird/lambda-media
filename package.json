@@ -1,0 +1,24 @@
+{
+  "name": "lambda-media",
+  "version": "1.0.0",
+  "description": "lambda method for media processing and archiving",
+  "main": "index.js",
+  "dependencies": {
+    "eslint": "^2.3.0",
+    "async": "^1.5.2",
+    "eslint-config-firstandthird": "^1.6.0",
+    "aws-sdk": "^2.2.41",
+    "js-yaml": "^3.5.3",
+    "eslint-config-airbnb": "^6.1.0",
+    "lodash": "^4.6.1",
+    "eslint-plugin-react": "^4.2.0",
+    "logr": "^1.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:lambda": "./scripts/deploy-lambda"
+  },
+  "author": "",
+  "license": "ISC"
+}
