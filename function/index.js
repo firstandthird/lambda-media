@@ -2,7 +2,6 @@
 
 const im = require('imagemagick');
 const s3 = require('../lib/s3.js');
-const async = require('async');
 const Logr = require('logr');
 const log = new Logr({
   defaultTags: ['handler'],
