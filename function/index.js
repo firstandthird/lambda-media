@@ -1,8 +1,9 @@
 'use strict';
 
 const im = require('imagemagick');
-const s3 = require('../lib/s3.js');
+const S3 = require('../lib/s3.js');
 const async = require('async');
+const _ = require('lodash');
 const Logr = require('logr');
 const log = new Logr({
   defaultTags: ['handler'],
@@ -10,11 +11,13 @@ const log = new Logr({
 });
 
 const config = {
+  stage: process.env.STAGE,
   debug: process.env.DEBUG,
   s3: {
     bucket: process.env.S3_BUCKET,
     region: process.env.AWS_REGION
-  }
+  },
+  host: process.env.HOST + process.env.STAGE
 };
 
 /* payload should look like:
@@ -22,12 +25,13 @@ const config = {
  outputBucket : String (optional)
  outputFile : String (name of the file to output)
 */
-module.exports.handler = (event, context) => {
+const handlePOST = (event, context) => {
+  const returnUrl = `${config.host}/${event.outputFile}`;
   const bucket = event.outputBucket ? event.outputBucket : config.s3.bucket;
   async.auto({
     resized: (done) => {
       im.resize({
-        srcData: new Buffer(event.data.base64, 'base64'),
+        srcData: new Buffer(event.data, 'base64'),
         width: '50%',
         height: '50%'
       }, (err, stdout, stderr) => {
@@ -41,7 +45,7 @@ module.exports.handler = (event, context) => {
       });
     },
     store: ['resized', (done, result) => {
-      const files = new s3(bucket);
+      const files = new S3(bucket);
       files.writeObject(event.outputFile, new Buffer(result.resized, 'binary'), (err) => {
         if (err) {
           return done(err);
@@ -51,9 +55,31 @@ module.exports.handler = (event, context) => {
     }]
   }, (err) => {
     if (err) {
-      console.log(err);
-      return context.fail(false);
+      return context.fail(err);
     }
-    return context.succeed(true);
+    return context.succeed(returnUrl);
   });
+};
+
+const handleGET = (event, context) => {
+  const bucket = event.outputBucket ? event.outputBucket : config.s3.bucket;
+  const files = new S3(bucket);
+  files.listObjects(null, (err, result) => {
+    if (err) {
+      return context.fail(err);
+    }
+    const fileList = [];
+    _.each(result.Contents, (n) => {
+      fileList.push(n.Key);
+    });
+    return context.succeed(fileList);
+  });
+};
+
+module.exports.handler = (event, context) => {
+  if (event.httpMethod === 'GET') {
+    handleGET(event, context);
+  } else {
+    handlePOST(event, context);
+  }
 };

@@ -9,17 +9,20 @@
 angular.module('testApp', ['naif.base64'])
 .controller('testController', function($scope, $http) {
   $scope.outputFile = "test.jpg";
-  $scope.outputBucket = "leanin-email-assets";
+  $scope.outputBucket = "lambda-media";
   $scope.data = "";
 
   $scope.submit = function(){
+    // $http.post('https://rkymnp5iyj.execute-api.us-east-1.amazonaws.com/stage?outputFile='+$scope.outputFile +
+    // '&outputBucket='+$scope.outputBucket+'&data='+$scope.data.base64, {})
     $http.post('https://rkymnp5iyj.execute-api.us-east-1.amazonaws.com/stage', {
       outputFile : $scope.outputFile,
       outputBucket : $scope.outputBucket,
       data : $scope.data.base64
     })
     .success(function(result){
-      alert("Done!  Reslt was: " + result.toString());
+      alert(result);
+      console.log(result);
     })
     .console.error((function(err){
       alert(err);
